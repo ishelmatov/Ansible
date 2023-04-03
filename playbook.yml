@@ -1,0 +1,26 @@
+---
+- name: Collect Cisco device running configurations
+  hosts: cisco
+  gather_facts: no
+  connection: network_cli
+  tasks:
+    - name: Get running configuration and hostname
+      ios_command:
+        commands:
+          - show running-config | include hostname
+      register: hostname_output
+
+    - name: Extract hostname from output
+      set_fact:
+        hostname: "{{ hostname_output.stdout[0].split()[-1] }}"
+
+    - name: Get running configuration
+      ios_command:
+        commands:
+          - show running-config
+      register: config_output
+
+    - name: Write configuration to file
+      copy:
+        content: "{{ config_output.stdout[0] }}"
+        dest: "/home/astel-backup/{{ hostname }}.txt"
